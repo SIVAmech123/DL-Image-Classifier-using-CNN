@@ -187,6 +187,3 @@ predict_image(model,image_index=80,dataset=test_dataset)
 
 ### RESULT
 Thus the CNN model was trained and tested successfully on the MNIST dataset.
-
-## RESULT
-Include your result here
