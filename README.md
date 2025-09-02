@@ -45,233 +45,173 @@ Optionally, display a confusion matrix or sample predictions.
 
 
 ## PROGRAM
-```
-!pip uninstall -y torch torchvision torchaudio
-!pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
-
+```python
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
+import torch.optim as optim
+import torchvision
+import torchvision.transforms as transforms
 from torch.utils.data import DataLoader
-from torchvision import datasets, transforms
-from torchvision.utils import make_grid
-
-import numpy as np
-import pandas as pd 
-from sklearn.metrics import confusion_matrix,classification_report
 import matplotlib.pyplot as plt
-%matplotlib inline
+import numpy as np
+from sklearn.metrics import confusion_matrix, classification_report
+import seaborn as sns
 
-transform = transforms.ToTensor()
+## Step 1: Load and Preprocess Data
+# Define transformations for images
+transform = transforms.Compose([
+    transforms.ToTensor(),          # Convert images to tensors
+    transforms.Normalize((0.5,), (0.5,))  # Normalize images
+])
 
-train_data = datasets.MNIST(root='../Data', train=True, download=True, transform=transform)
-test_data = datasets.MNIST(root='../Data', train=False, download=True, transform=transform)
+# Load MNIST dataset
+train_dataset = torchvision.datasets.MNIST(root="./data", train=True, transform=transform, download=True)
+test_dataset = torchvision.datasets.MNIST(root="./data", train=False, transform=transform, download=True)
 
-train_data
-test_data
+# Get the shape of the first image in the training dataset
+image, label = train_dataset[0]
+print("Image shape:", image.shape)
+print("Number of training samples:", len(train_dataset))
 
-train_loader = DataLoader(train_data, batch_size=10, shuffle=True)
-test_loader = DataLoader(test_data, batch_size=10, shuffle=False)
+# Get the shape of the first image in the test dataset
+image, label = test_dataset[0]
+print("Image shape:", image.shape)
+print("Number of testing samples:", len(test_dataset))
 
-# 1 colour channel, 6 filter(output channel) 3 x 3 kernal , stride = 1
-conv1 = nn.Conv2d(1,6,3,1) # ---> 6 filters ---> pooling ---> conv2
-# 6 input filters conv1, 16 filters, 3 x 3 kernal, stride = 1
-conv2 = nn.Conv2d(6,16,3,1)
 
-# Grab the first MNIST record
-for i, (X_train, y_train) in enumerate(train_data):
-    break
+# Create DataLoader for batch processing
+train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
+test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
 
-X_train
-
-X_train.shape
-
-x = X_train.view(1,1,28,28)  # 4D batch ( batch of 1 image)
-x
-
-x = F.relu(conv1(x))
-x.shape
-
-x = F.max_pool2d(x,2,2)
-x.shape
-x = F.relu(conv2(x))
-
-x.shape
-
-x = F.max_pool2d(x,2,2)
-x.shape
-11/2
-(((28-2)/2) -2)/2
-
-# flatten 
-x.shape
-x.view(-1,16*5*5).shape
-
-class ConvolutionalNetwork(nn.Module):
-
+class CNNClassifier(nn.Module):
     def __init__(self):
-        super().__init__()
-        self.conv1 = nn.Conv2d(1,6,3,1)
-        self.conv2 = nn.Conv2d(6,16,3,1)
-        self.fc1 = nn.Linear(5*5*16,120)
-        self.fc2 = nn.Linear(120,84)
-        self.fc3 = nn.Linear(84,10)
+        super(CNNClassifier, self).__init__()
+        self.conv1=nn.Conv2d(in_channels=1,out_channels=32,kernel_size=3,padding=1)
+        self.conv2=nn.Conv2d(in_channels=32,out_channels=64,kernel_size=3,padding=1)
+        self.conv3=nn.Conv2d(in_channels=64,out_channels=128,kernel_size=3,padding=1)
+        self.pool=nn.MaxPool2d(kernel_size=2,stride=2)
+        self.fc1=nn.Linear(128*3*3,128)
+        self.fc2=nn.Linear(128,64)
+        self.fc3=nn.Linear(64,10)
 
-    def forward(self, X):
-        X = F.relu(self.conv1(X))
-        X = F.max_pool2d(X, 2, 2)
-        X = F.relu(self.conv2(X))
-        X = F.max_pool2d(X, 2, 2)
-        X = X.view(-1, 5*5*16)
-        X = F.relu(self.fc1(X))
-        X = F.relu(self.fc2(X))
-        X = self.fc3(X)
-        return F.log_softmax(X, dim=1)
+    def forward(self, x):
+      x=self.pool(torch.relu(self.conv1(x)))
+      x=self.pool(torch.relu(self.conv2(x)))
+      x=self.pool(torch.relu(self.conv3(x)))
+      x=x.view(x.size(0),-1)
+      x=torch.relu(self.fc1(x))
+      x=torch.relu(self.fc2(x))
+      x=self.fc3(x)
+      return x
 
+from torchsummary import summary
 
-torch.manual_seed(42)
-model = ConvolutionalNetwork()
-model
+# Initialize model
+model = CNNClassifier()
 
-for param in model.parameters():
-    print(param.numel())
+# Move model to GPU if available
+if torch.cuda.is_available():
+    device = torch.device("cuda")
+    model.to(device)
 
+# Print model summary
+print('Name:  SIVAKUMAR R      ')
+print('Register Number:  212223230209     ')
+summary(model, input_size=(1, 28, 28))
+
+# Initialize model, loss function, and optimizer
 criterion = nn.CrossEntropyLoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+optimizer =optim.Adam(model.parameters(),lr=0.001)
 
-import time
-start_time = time.time()
+## Step 3: Train the Model
+def train_model(model, train_loader, num_epochs=10):
+  for epoch in range(num_epochs):
+     model.train()
+     running_loss=0.0
+     for images,labels in train_loader:
+      if torch.cuda.is_available():
+        images,labels=images.to(device),labels.to(device)
+      optimizer.zero_grad()
+      outputs=model(images)
+      loss=criterion(outputs,labels)
+      loss.backward()
+      optimizer.step()
+      running_loss+=loss.item()
+     print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {running_loss/len(train_loader):.4f}')
+  print('Name: SIVAKUMAR R ')
+  print('Register Number: 212223230209  ')
+# Train the model
+train_model(model, train_loader, num_epochs=10)
 
-# Variables ( Trackers)
-epochs = 5
-train_losses = []
-test_losses = []
-train_correct = []
-test_correct = []
+## Step 4: Test the Model
 
-# for loop epochs 
-for i in range(epochs):
-    
-    trn_corr = 0
-    tst_corr = 0
-
-
-    # Run the training batches
-    for b, (X_train, y_train) in enumerate(train_loader):
-        b+=1
-        
-        # Apply the model
-        y_pred = model(X_train)  # we not flatten X-train here
-        loss = criterion(y_pred, y_train)
- 
-        
-        predicted = torch.max(y_pred.data, 1)[1]
-        batch_corr = (predicted == y_train).sum()  # Trure 1 / False 0 sum()
-        trn_corr += batch_corr
-        
-        # Update parameters
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-        
-        # Print interim results
-        if b%600 == 0:
-            print(f'epoch: {i}  batch: {b} loss: {loss.item()}')
-        
-    train_losses.append(loss)
-    train_correct.append(trn_corr)
-        
-    # Run the testing batches
-    with torch.no_grad():
-        for b, (X_test, y_test) in enumerate(test_loader):
-
-            # Apply the model
-            y_val = model(X_test)
-
-            # Tally the number of correct predictions
-            predicted = torch.max(y_val.data, 1)[1] 
-            tst_corr += (predicted == y_test).sum()
-            
-    loss = criterion(y_val, y_test)
-    test_losses.append(loss)
-    test_correct.append(tst_corr)
-        
-current_time = time.time()
-total = current_time - start_time
-print(f'Training took {total/60} minutes')
-
-# Detach and convert to NumPy
-train_losses = [t.detach().numpy() for t in train_losses]
-test_losses = [t.detach().numpy() for t in test_losses]
-
-plt.plot(train_losses, label='training loss')
-plt.plot(test_losses, label='validation loss')
-plt.title('Loss at the End of Each Epoch\nBy JAIGANESH')
-plt.legend();
-plt.show()
-
-plt.plot([t/600 for t in train_correct], label='training accuracy')
-plt.plot([t/100 for t in test_correct], label='validation accuracy')
-plt.title('Accuracy at the end of each epoch\nBy JAIGANESH')
-plt.legend();
-plt.show()
-
-# Extract the data all at once, not in batches
-test_load_all = DataLoader(test_data, batch_size=10000, shuffle=False)
-
-with torch.no_grad():
+def test_model(model, test_loader):
+    model.eval()
     correct = 0
-    for X_test, y_test in test_load_all:
-        y_val = model(X_test)  # we don't flatten the data this time
-        predicted = torch.max(y_val,1)[1]
-        correct += (predicted == y_test).sum()
+    total = 0
+    all_preds = []
+    all_labels = []
 
-correct.item()
-correct.item()/len(test_data)
+    with torch.no_grad():
+        for images, labels in test_loader:
+            if torch.cuda.is_available():
+                images, labels = images.to(device), labels.to(device)
 
-# print a row of values for reference
-np.set_printoptions(formatter=dict(int=lambda x: f'{x:4}'))
-print(np.arange(10).reshape(1,10))
-print()
+            outputs = model(images)
+            _, predicted = torch.max(outputs, 1)
+            total += labels.size(0)
+            correct += (predicted == labels).sum().item()
+            all_preds.extend(predicted.cpu().numpy())
+            all_labels.extend(labels.cpu().numpy())
 
-# print the confusion matrix
-print(confusion_matrix(predicted.view(-1), y_test.view(-1)))
-print("JAIGANESH S")
+    accuracy = correct / total
+    print('Name:SIVAKUMAR R ')
+    print('Register Number: 212223230209 ')
+    print(f'Test Accuracy: {accuracy:.4f}')
+    # Compute confusion matrix
+    cm = confusion_matrix(all_labels, all_preds)
+    plt.figure(figsize=(8, 6))
+    print('Name:SIVAKUMAR R ')
+    print('Register Number:212223230209 ')
+    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=test_dataset.classes, yticklabels=test_dataset.classes)
+    plt.xlabel('Predicted')
+    plt.ylabel('Actual')
+    plt.title('Confusion Matrix')
+    plt.show()
+    # Print classification report
+    print('Name:SIVAKUMAR R ')
+    print('Register Number: 212223230209')
+    print("Classification Report:")
+    print(classification_report(all_labels, all_preds, target_names=[str(i) for i in range(10)]))
+# Evaluate the model
+test_model(model, test_loader)
 
-# single image for test 
-plt.imshow(test_data[2019][0].reshape(28,28))
-plt.show()
 
-model.eval()
-with torch.no_grad():
-    new_prediction = model(test_data[2019][0].view(1,1,28,28))
+## Step 5: Predict on a Single Image
+def predict_image(model, image_index, dataset):
+    model.eval()
+    image, label = dataset[image_index]
+    if torch.cuda.is_available():
+        image = image.to(device)
 
-new_prediction.argmax()
+    with torch.no_grad():
+        output = model(image.unsqueeze(0))
+        _, predicted = torch.max(output, 1)
 
-# Convert tensors to NumPy arrays
-y_true = y_test.view(-1).cpu().numpy()
-y_pred = predicted.view(-1).cpu().numpy()
+    class_names = [str(i) for i in range(10)]
 
-# Print classification report
-print("Classification Report by JAIGANESH\n")
-print(classification_report(y_true, y_pred))
+    print('Name: SIVAKUMAR R ')
+    print('Register Number: 212223230209')
+    plt.imshow(image.cpu().squeeze(), cmap="gray")
+    plt.title(f'Actual: {class_names[label]}\nPredicted: {class_names[predicted.item()]}')
+    plt.axis("off")
+    plt.show()
+    print(f'Actual: {class_names[label]}, Predicted: {class_names[predicted.item()]}')
+# Example Prediction
+predict_image(model, image_index=80, dataset=test_dataset)
 
 
-# single image for test 
-plt.imshow(test_data[333][0].reshape(28,28))
-plt.show()
-model.eval()
-with torch.no_grad():
-    new_prediction = model(test_data[333][0].view(1,1,28,28))
-
-new_prediction.argmax()
-
-test_data[333][1]
 ```
-### Name: KARTHIKEYAN R
-
-### Register Number: 212222240046
-
 ### OUTPUT
 
 ## Training Loss per Epoch
@@ -280,12 +220,9 @@ test_data[333][1]
 
 
 ## Confusion Matrix
-![image](https://github.com/user-attachments/assets/989ba744-6535-491b-8814-c3f6b0b7a02e)
 
+<img width="687" height="591" alt="image" src="https://github.com/user-attachments/assets/7c777b87-f6bf-4df5-b8c0-7d31a64abd37" />
 
-
-## Classification Report
-![image](https://github.com/user-attachments/assets/ecf3ac71-848e-405a-91dd-3c1721b68412)
 
 
 
