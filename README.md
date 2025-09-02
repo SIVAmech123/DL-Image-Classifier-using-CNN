@@ -32,9 +32,9 @@ Evaluate the model using the test dataset and visualize the results (accuracy, c
 
 ## PROGRAM
 
-### Name: HARISA.S
+### Name: SIVAKUMAR R
 
-### Register Number:212224230087
+### Register Number:212223230209
 ```python
 import torch as t
 import torch.nn as nn
@@ -87,8 +87,8 @@ model=CNNClassifier()
 if t.cuda.is_available():
   device=t.device("cuda")
   model.to(device)
-print("Name: HARISHA.S")
-print("Reg.no: 212224230087")
+print("Name: SIVAKUMAR R")
+print("Reg.no: 212223230209")
 summary(model,input_size=(1,28,28))
 criterion=nn.CrossEntropyLoss()
 optimizer=optim.Adam(model.parameters(),lr=0.001)
