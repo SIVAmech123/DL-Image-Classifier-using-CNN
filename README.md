@@ -220,8 +220,8 @@ predict_image(model, image_index=80, dataset=test_dataset)
 
 
 ## Confusion Matrix
+<img width="840" height="633" alt="image" src="https://github.com/user-attachments/assets/a9fb21c3-fbdf-40c8-ae3f-750110716a22" />
 
-<img width="687" height="591" alt="image" src="https://github.com/user-attachments/assets/7c777b87-f6bf-4df5-b8c0-7d31a64abd37" />
 
 
 
