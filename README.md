@@ -34,7 +34,7 @@ Evaluate the model using the test dataset and visualize the results (accuracy, c
 
 ### Register Number: 212223230209
 
-python
+python```
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -168,7 +168,7 @@ new_prediction.argmax()
 plt.imshow(test_data[334][0].reshape(28,28))
 plt.show()
 
-
+```
 ### OUTPUT:
 
 
