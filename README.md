@@ -30,9 +30,9 @@ Evaluate the model using the test dataset and visualize the results (accuracy, c
 
 ## PROGRAM
 
-### Name:Ashwin Akash M
+### Name:SIVAKUMAR R
 
-### Register Number:212223230024
+### Register Number:212223230209
 
 ```python
 ## 
