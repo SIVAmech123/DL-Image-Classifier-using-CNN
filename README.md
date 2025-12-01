@@ -161,7 +161,7 @@ np.set_printoptions(formatter=dict(int=lambda x: f'{x:4}'))
 print(np.arange(10).reshape(1,10))
 print()
 print(confusion_matrix(predicted.view(-1), y_test.view(-1)))
-model.eval()
+model.eval() 
 with torch.no_grad():
     new_prediction = model(test_data[2019][0].view(1,1,28,28))
 new_prediction.argmax()
