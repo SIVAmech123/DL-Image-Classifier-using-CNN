@@ -1,14 +1,13 @@
 # DL-Convolutional Deep Neural Network for Image Classification
 
-## AIM:
+## AIM
 To develop a convolutional neural network (CNN) classification model for the given dataset.
 
 ## THEORY
 The MNIST dataset consists of 70,000 grayscale images of handwritten digits (0-9), each of size 28×28 pixels. The task is to classify these images into their respective digit categories. CNNs are particularly well-suited for image classification tasks as they can automatically learn spatial hierarchies of features through convolutional layers, pooling layers, and fully connected layers.
 
 ## Neural Network Model
-![image](https://github.com/user-attachments/assets/4d43ccc3-3af5-4ed3-b59a-bb5d804dd19f)
-
+Include the neural network model diagram.
 
 ## DESIGN STEPS
 ### STEP 1: Define the problem
@@ -30,7 +29,6 @@ Add convolutional layers with activation (ReLU), followed by pooling layers.
 Flatten the output and add Dense layers.
 Use a softmax layer for classification.
 
-
 ### STEP 5: Compile and train the model
 Compile the model with an optimizer (e.g., Adam), loss function (e.g., categorical crossentropy), and metrics (accuracy).
 Train the model using training data and validate using validation split or test data.
@@ -43,10 +41,10 @@ Optionally, display a confusion matrix or sample predictions.
 
 
 
-
 ## PROGRAM
-```python
-import torch
+
+```
+import torch as t
 import torch.nn as nn
 import torch.optim as optim
 import torchvision
@@ -54,82 +52,60 @@ import torchvision.transforms as transforms
 from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
 import numpy as np
-from sklearn.metrics import confusion_matrix, classification_report
 import seaborn as sns
+from sklearn.metrics import confusion_matrix, classification_report
 
-## Step 1: Load and Preprocess Data
-# Define transformations for images
-transform = transforms.Compose([
-    transforms.ToTensor(),          # Convert images to tensors
-    transforms.Normalize((0.5,), (0.5,))  # Normalize images
-])
+transform=transforms.Compose([transforms.ToTensor(),transforms.Normalize((0.5,),(0.5,))])
+train_dataset=torchvision.datasets.MNIST(root='./data',train=True,download=True,transform=transform)
+test_dataset=torchvision.datasets.MNIST(root='./data',train=False,download=True,transform=transform)
 
-# Load MNIST dataset
-train_dataset = torchvision.datasets.MNIST(root="./data", train=True, transform=transform, download=True)
-test_dataset = torchvision.datasets.MNIST(root="./data", train=False, transform=transform, download=True)
+image,label=train_dataset[0]
+print("Image shape:",image.shape)
+print("Number of training samples:",len(train_dataset))
 
-# Get the shape of the first image in the training dataset
-image, label = train_dataset[0]
-print("Image shape:", image.shape)
-print("Number of training samples:", len(train_dataset))
-
-# Get the shape of the first image in the test dataset
-image, label = test_dataset[0]
-print("Image shape:", image.shape)
-print("Number of testing samples:", len(test_dataset))
-
-
-# Create DataLoader for batch processing
-train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
-test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
+image,label=test_dataset[0]
+print("Image shape:",image.shape)
+print("Number of testing samples:",len(test_dataset))
+train_loader=DataLoader(train_dataset,batch_size=32,shuffle=True)
+test_loader=DataLoader(test_dataset,batch_size=32,shuffle=False)
 
 class CNNClassifier(nn.Module):
-    def __init__(self):
-        super(CNNClassifier, self).__init__()
-        self.conv1=nn.Conv2d(in_channels=1,out_channels=32,kernel_size=3,padding=1)
-        self.conv2=nn.Conv2d(in_channels=32,out_channels=64,kernel_size=3,padding=1)
-        self.conv3=nn.Conv2d(in_channels=64,out_channels=128,kernel_size=3,padding=1)
-        self.pool=nn.MaxPool2d(kernel_size=2,stride=2)
-        self.fc1=nn.Linear(128*3*3,128)
-        self.fc2=nn.Linear(128,64)
-        self.fc3=nn.Linear(64,10)
+  def __init__(self):
+    super(CNNClassifier,self).__init__()
+    self.conv1=nn.Conv2d(in_channels=1,out_channels=32,kernel_size=3,padding=1)
+    self.conv2=nn.Conv2d(in_channels=32,out_channels=64,kernel_size=3,padding=1)
+    self.conv3=nn.Conv2d(in_channels=64,out_channels=128,kernel_size=3,padding=1)
+    self.pool=nn.MaxPool2d(kernel_size=2,stride=2)
+    self.fc1=nn.Linear(128*3*3,128)
+    self.fc2=nn.Linear(128,64)
+    self.fc3=nn.Linear(64,10)
 
-    def forward(self, x):
-      x=self.pool(torch.relu(self.conv1(x)))
-      x=self.pool(torch.relu(self.conv2(x)))
-      x=self.pool(torch.relu(self.conv3(x)))
-      x=x.view(x.size(0),-1)
-      x=torch.relu(self.fc1(x))
-      x=torch.relu(self.fc2(x))
-      x=self.fc3(x)
-      return x
+  def forward(self,x):
+    x=self.pool(t.relu(self.conv1(x)))
+    x=self.pool(t.relu(self.conv2(x)))
+    x=self.pool(t.relu(self.conv3(x)))
+    x=x.view(x.size(0),-1)
+    x=nn.functional.relu(self.fc1(x))
+    x=nn.functional.relu(self.fc2(x))
+    x=self.fc3(x)
+    return x
 
 from torchsummary import summary
-
-# Initialize model
-model = CNNClassifier()
-
-# Move model to GPU if available
-if torch.cuda.is_available():
-    device = torch.device("cuda")
-    model.to(device)
-
-# Print model summary
-print('Name:  SIVAKUMAR R      ')
-print('Register Number:  212223230209     ')
-summary(model, input_size=(1, 28, 28))
-
-# Initialize model, loss function, and optimizer
-criterion = nn.CrossEntropyLoss()
-optimizer =optim.Adam(model.parameters(),lr=0.001)
-
-## Step 3: Train the Model
-def train_model(model, train_loader, num_epochs=10):
+model=CNNClassifier()
+if t.cuda.is_available():
+  device=t.device("cuda")
+  model.to(device)
+print("Name: HARISHA.S")
+print("Reg.no: 212224230087")
+summary(model,input_size=(1,28,28))
+criterion=nn.CrossEntropyLoss()
+optimizer=optim.Adam(model.parameters(),lr=0.001)
+def train_model(model,train_loader,num_epochs):
   for epoch in range(num_epochs):
-     model.train()
-     running_loss=0.0
-     for images,labels in train_loader:
-      if torch.cuda.is_available():
+    model.train()
+    running_loss=0.0
+    for images,labels in train_loader:
+      if t.cuda.is_available():
         images,labels=images.to(device),labels.to(device)
       optimizer.zero_grad()
       outputs=model(images)
@@ -137,95 +113,94 @@ def train_model(model, train_loader, num_epochs=10):
       loss.backward()
       optimizer.step()
       running_loss+=loss.item()
-     print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {running_loss/len(train_loader):.4f}')
-  print('Name: SIVAKUMAR R ')
-  print('Register Number: 212223230209  ')
-# Train the model
-train_model(model, train_loader, num_epochs=10)
+    print(f"Epoch [{epoch+1}/{num_epochs}], Loss: {running_loss/len(train_loader):.4f}")
+print("Name: HARISHA.S")
+print("Reg.no: 212224230087")
 
-## Step 4: Test the Model
+train_model(model,train_loader,num_epochs=10)
 
 def test_model(model, test_loader):
-    model.eval()
-    correct = 0
-    total = 0
-    all_preds = []
-    all_labels = []
+  model.eval()
+  correct = 0
+  total = 0
+  all_preds = []
+  all_labels = []
+  with t.no_grad():
+    for images, labels in test_loader:
+      if t.cuda.is_available():
+        images, labels = images.to(device), labels.to(device)
 
-    with torch.no_grad():
-        for images, labels in test_loader:
-            if torch.cuda.is_available():
-                images, labels = images.to(device), labels.to(device)
+      outputs = model(images)
+      _, predicted = t.max(outputs, 1)
+      total += labels.size(0)
+      correct += (predicted == labels).sum().item()
+      all_preds.extend(predicted.cpu().numpy())
+      all_labels.extend(labels.cpu().numpy())
 
-            outputs = model(images)
-            _, predicted = torch.max(outputs, 1)
-            total += labels.size(0)
-            correct += (predicted == labels).sum().item()
-            all_preds.extend(predicted.cpu().numpy())
-            all_labels.extend(labels.cpu().numpy())
+  accuracy = correct/total
 
-    accuracy = correct / total
-    print('Name:SIVAKUMAR R ')
-    print('Register Number: 212223230209 ')
-    print(f'Test Accuracy: {accuracy:.4f}')
-    # Compute confusion matrix
-    cm = confusion_matrix(all_labels, all_preds)
-    plt.figure(figsize=(8, 6))
-    print('Name:SIVAKUMAR R ')
-    print('Register Number:212223230209 ')
-    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=test_dataset.classes, yticklabels=test_dataset.classes)
-    plt.xlabel('Predicted')
-    plt.ylabel('Actual')
-    plt.title('Confusion Matrix')
-    plt.show()
-    # Print classification report
-    print('Name:SIVAKUMAR R ')
-    print('Register Number: 212223230209')
-    print("Classification Report:")
-    print(classification_report(all_labels, all_preds, target_names=[str(i) for i in range(10)]))
-# Evaluate the model
+  print(f"Test Accuracy: {accuracy:.4f}")
+
+  cm = confusion_matrix(all_labels, all_preds)
+  plt.figure(figsize=(8, 6))
+  print("Name: HARISHA.S")
+  print("Reg.no: 212224230087")
+  sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", xticklabels=test_dataset.classes, yticklabels=test_dataset.classes)
+  plt.xlabel("Predicted")
+  plt.ylabel("Actual")
+  plt.title("Confusion Matrix")
+  plt.show()
+
+  print("Name: HARISHA.S")
+  print("Reg.no: 212224230087")
+  print("Classification Report:")
+  print(classification_report(all_labels, all_preds, target_names=[str(i) for i in range(10)]))
 test_model(model, test_loader)
 
+def predict_image(model,image_index,dataset):
+  model.eval()
+  image,label=dataset[image_index]
+  if t.cuda.is_available():
+    image=image.to(device)
 
-## Step 5: Predict on a Single Image
-def predict_image(model, image_index, dataset):
-    model.eval()
-    image, label = dataset[image_index]
-    if torch.cuda.is_available():
-        image = image.to(device)
-
-    with torch.no_grad():
-        output = model(image.unsqueeze(0))
-        _, predicted = torch.max(output, 1)
-
-    class_names = [str(i) for i in range(10)]
-
-    print('Name: SIVAKUMAR R ')
-    print('Register Number: 212223230209')
-    plt.imshow(image.cpu().squeeze(), cmap="gray")
-    plt.title(f'Actual: {class_names[label]}\nPredicted: {class_names[predicted.item()]}')
-    plt.axis("off")
-    plt.show()
-    print(f'Actual: {class_names[label]}, Predicted: {class_names[predicted.item()]}')
-# Example Prediction
-predict_image(model, image_index=80, dataset=test_dataset)
-
-
+  with t.no_grad():
+    output=model(image.unsqueeze(0))
+    _,predicted=t.max(output,1)
+  class_names=[str(i) for i in range(10)]
+  print("Name: HARISHA.S")
+  print("Reg.no: 212224230087")
+  plt.imshow(image.cpu().squeeze(0),cmap='gray')
+  plt.title(f"Actual: {class_names[label]}\nPredicted: {class_names[predicted.item()]}")
+  plt.axis("off")
+  plt.show()
+  print(f"Actual: {class_names[label]}\nPredicted: {class_names[predicted.item()]}")
+predict_image(model,image_index=80,dataset=test_dataset)
 ```
+
+### Name: SIVAKUMAR R
+
+### Register Number: 212223230209
+
 ### OUTPUT
 
+## Training Loss per Epoch
+<img width="785" height="792" alt="image" src="https://github.com/user-attachments/assets/c282c336-ea0d-4e0c-b2ea-c9de572986fa" />
 
 
 ## Confusion Matrix
-<img width="840" height="633" alt="image" src="https://github.com/user-attachments/assets/a9fb21c3-fbdf-40c8-ae3f-750110716a22" />
+<img width="1017" height="803" alt="image" src="https://github.com/user-attachments/assets/6a242f61-f51d-4343-bc91-f1a76453a591" />
 
-<img width="687" height="591" alt="Screenshot 2025-09-02 124523" src="https://github.com/user-attachments/assets/a793c740-dd62-4b0e-b5b6-81cb3719734b" />
+
+
+## Classification Report
+<img width="701" height="445" alt="image" src="https://github.com/user-attachments/assets/0a1373b1-6d28-4e8e-93cb-8c84055fb656" />
 
 
 
 
 ### New Sample Data Prediction
-![image](https://github.com/user-attachments/assets/d256b4f5-0d75-4683-84aa-eb3708678fd0)
+<img width="677" height="646" alt="image" src="https://github.com/user-attachments/assets/05cce439-2e14-46e1-be93-06e1a121abb1" />
+
 
 
 ## RESULT
