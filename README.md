@@ -184,6 +184,8 @@ predict_image(model,image_index=80,dataset=test_dataset)
 ### OUTPUT
 
 ## Training Loss per Epoch
+<img width="1002" height="678" alt="image" src="https://github.com/user-attachments/assets/004b4f6c-c328-41f0-af68-5e7ba61ca1e2" />
+
 <img width="785" height="792" alt="image" src="https://github.com/user-attachments/assets/c282c336-ea0d-4e0c-b2ea-c9de572986fa" />
 
 
